@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mantenimiento | CBTIS 128</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page-body">
+    <header class="site-header">
+      <div class="container nav">
+        <div class="brand">CBTIS 128</div>
+        <nav class="menu">
+          <a href="index.html">Inicio</a>
+          <a href="informacion.html">Información</a>
+          <a href="quejas.html">Quejas</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-main admin-page">
+      <section class="page-banner">
+        <p class="eyebrow">Panel de mantenimiento</p>
+        <h1>Gestión de quejas del plantel</h1>
+      </section>
+
+      <div class="admin-actions">
+        <button class="btn btn-primary" id="logoutBtn">Cerrar sesión</button>
+      </div>
+
+      <section class="report-list admin-list" id="adminList"></section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <p>CBTIS 128 • Cuidado de instalaciones</p>
+      </div>
+    </footer>
+
+    <script>
+      const clave = 'cbtis128_reportes';
+      const adminList = document.getElementById('adminList');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      const password = 'mantenimiento128';
+
+      function validarAcceso() {
+        const acceso = sessionStorage.getItem('cbtis128_admin');
+        if (acceso !== 'true') {
+          const ingreso = prompt('Ingrese la contraseña de mantenimiento');
+          if (ingreso === password) {
+            sessionStorage.setItem('cbtis128_admin', 'true');
+          } else {
+            alert('Acceso denegado');
+            window.location.href = 'index.html';
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function obtenerReportes() {
+        const registros = JSON.parse(localStorage.getItem(clave) || '[]');
+        if (registros.length) return registros;
+        return [
+          {
+            id: 1,
+            lugar: 'Laboratorio',
+            aula: 'Laboratorio de química',
+            descripcion: 'Se reportó una fuga de agua y un extractor defectuoso.',
+            prioridad: 'Alta',
+            nombre: 'Alumno',
+            fecha: '12/09/2026',
+            foto: '',
+            estado: 'Resuelto',
+            trabajando: 'Sí',
+            fotoSeguimiento: ''
+          },
+          {
+            id: 2,
+            lugar: 'Salón',
+            aula: 'Aula 18',
+            descripcion: 'Las lámparas del salón presentan fallas intermitentes.',
+            prioridad: 'Media',
+            nombre: 'Docente',
+            fecha: '15/09/2026',
+            foto: '',
+            estado: 'En proceso',
+            trabajando: 'Sí',
+            fotoSeguimiento: ''
+          },
+          {
+            id: 3,
+            lugar: 'Cancha de futbol',
+            aula: 'Cancha principal',
+            descripcion: 'La malla perimetral presenta un daño en un extremo.',
+            prioridad: 'Alta',
+            nombre: 'Alumno',
+            fecha: '18/09/2026',
+            foto: '',
+            estado: 'Pendiente',
+            trabajando: 'No',
+            fotoSeguimiento: ''
+          }
+        ];
+      }
+
+      function guardarReportes(reportes) {
+        localStorage.setItem(clave, JSON.stringify(reportes));
+      }
+
+      function eliminarReporte(id) {
+        const reportes = obtenerReportes().filter((reporte) => reporte.id !== id);
+        guardarReportes(reportes);
+        renderizarReportes();
+      }
+
+      function actualizarReporte(id, campo, valor) {
+        const reportes = obtenerReportes();
+        const actualizados = reportes.map((reporte) => {
+          if (reporte.id === id) {
+            return { ...reporte, [campo]: valor };
+          }
+          return reporte;
+        });
+        guardarReportes(actualizados);
+        renderizarReportes();
+      }
+
+      function cargarImagenComoDataURL(file, callback) {
+        if (!file) return callback('');
+        const lector = new FileReader();
+        lector.onload = function (e) {
+          callback(e.target.result);
+        };
+        lector.readAsDataURL(file);
+      }
+
+      function renderizarReportes() {
+        const reportes = obtenerReportes();
+        adminList.innerHTML = '';
+
+        if (!reportes.length) {
+          adminList.innerHTML = '<div class="empty-state">No hay quejas registradas.</div>';
+          return;
+        }
+
+        reportes.forEach((reporte) => {
+          const card = document.createElement('article');
+          card.className = 'report-card admin-card';
+
+          card.innerHTML = `
+            <div class="report-header">
+              <h2>${reporte.lugar} - ${reporte.aula}</h2>
+              <button class="btn-delete" data-id="${reporte.id}">Eliminar</button>
+            </div>
+            <div class="report-meta">
+              <span>Prioridad: ${reporte.prioridad}</span>
+              <span>Fecha: ${reporte.fecha}</span>
+              <span>Reportante: ${reporte.nombre}</span>
+            </div>
+            <p>${reporte.descripcion}</p>
+
+            <div class="admin-grid">
+              <label class="status-control">
+                <span>Estado</span>
+                <select data-field="estado" data-id="${reporte.id}">
+                  <option value="Pendiente" ${reporte.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                  <option value="En proceso" ${reporte.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
+                  <option value="Resuelto" ${reporte.estado === 'Resuelto' ? 'selected' : ''}>Resuelto</option>
+                </select>
+              </label>
+
+              <label class="status-control">
+                <span>¿Se está haciendo algo?</span>
+                <select data-field="trabajando" data-id="${reporte.id}">
+                  <option value="Sí" ${reporte.trabajando === 'Sí' ? 'selected' : ''}>Sí</option>
+                  <option value="No" ${reporte.trabajando === 'No' ? 'selected' : ''}>No</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="admin-upload">
+              <label>
+                <span>Foto de seguimiento</span>
+                <input type="file" accept="image/*" data-field="fotoSeguimiento" data-id="${reporte.id}" />
+              </label>
+              ${reporte.fotoSeguimiento ? `<img src="${reporte.fotoSeguimiento}" alt="Seguimiento" class="mini-preview" />` : ''}
+            </div>
+
+            ${reporte.foto ? `<div class="report-photo-box"><img src="${reporte.foto}" alt="Foto de la problemática" /></div>` : ''}
+          `;
+
+          const deleteBtn = card.querySelector('.btn-delete');
+          deleteBtn.addEventListener('click', () => eliminarReporte(reporte.id));
+
+          card.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', (event) => {
+              const target = event.target;
+              actualizarReporte(Number(target.dataset.id), target.dataset.field, target.value);
+            });
+          });
+
+          const inputFoto = card.querySelector('input[type="file"]');
+          if (inputFoto) {
+            inputFoto.addEventListener('change', (event) => {
+              const file = event.target.files[0];
+              cargarImagenComoDataURL(file, (dataUrl) => {
+                actualizarReporte(Number(event.target.dataset.id), 'fotoSeguimiento', dataUrl);
+              });
+            });
+          }
+
+          adminList.appendChild(card);
+        });
+      }
+
+      logoutBtn.addEventListener('click', function () {
+        sessionStorage.removeItem('cbtis128_admin');
+        window.location.href = 'index.html';
+      });
+
+      if (validarAcceso()) {
+        renderizarReportes();
+      }
+    </script>
+  </body>
+</html>
