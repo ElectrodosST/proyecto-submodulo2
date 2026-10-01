@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mantenimiento | CBTIS 128</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page-body">
+    <header class="site-header">
+      <div class="container nav">
+        <div class="brand">CBTIS 128</div>
+        <nav class="menu">
+          <a href="index.html">Inicio</a>
+          <a href="informacion.html">Información</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-main admin-page">
+      <section class="page-banner">
+        <p class="eyebrow">Panel de mantenimiento</p>
+        <h1>Gestión de quejas del plantel</h1>
+      </section>
+
+      <div class="admin-actions">
+        <button class="btn btn-primary" id="logoutBtn">Cerrar sesión</button>
+      </div>
+
+      <section class="report-form admin-settings">
+        <h2>Usuarios de jefes de grupo</h2>
+        <p class="settings-note">Las cuentas se guardan en este navegador y pueden iniciar sesión en Quejas y Reportes.</p>
+        <form id="userForm" class="form-grid">
+          <label>
+            <span>Correo institucional</span>
+            <input type="email" name="correo" placeholder="a.23308051280594@cbtis128.edu.mx" pattern="a\.[0-9]+@cbtis128\.edu\.mx" autocomplete="off" required />
+          </label>
+          <label>
+            <span>Contraseña (mínimo 8 caracteres)</span>
+            <input type="password" name="contrasena" minlength="8" autocomplete="new-password" required />
+          </label>
+          <button type="submit" class="btn btn-primary">Crear usuario</button>
+        </form>
+        <p class="form-message" id="userMessage" role="status"></p>
+        <ul class="user-list" id="userList"></ul>
+      </section>
+
+      <section class="report-list admin-list" id="adminList"></section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <p>CBTIS 128 • Cuidado de instalaciones</p>
+      </div>
+    </footer>
+
+    <script src="auth.js"></script>
+    <script>
+      const clave = 'cbtis128_reportes';
+      const adminList = document.getElementById('adminList');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const userForm = document.getElementById('userForm');
+      const userList = document.getElementById('userList');
+      const userMessage = document.getElementById('userMessage');
+
+      const password = 'mantenimiento128';
+
+      function validarAcceso() {
+        const acceso = sessionStorage.getItem('cbtis128_admin');
+        if (acceso !== 'true') {
+          const ingreso = prompt('Ingrese la contraseña de mantenimiento');
+          if (ingreso === password) {
+            sessionStorage.setItem('cbtis128_admin', 'true');
+          } else {
+            alert('Acceso denegado');
+            window.location.href = 'index.html';
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function obtenerReportes() {
+        try {
+          const registros = JSON.parse(localStorage.getItem(clave) || '[]');
+          return Array.isArray(registros) ? registros : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function guardarReportes(reportes) {
+        localStorage.setItem(clave, JSON.stringify(reportes));
+      }
+
+      function eliminarReporte(id) {
+        const reportesActuales = obtenerReportes();
+        const reporte = reportesActuales.find((registro) => registro.id === id);
+        if (!reporte || reporte.estado !== 'Resuelto' || !reporte.fotoSeguimiento) return;
+        if (!confirm('¿Eliminar este reporte resuelto con evidencia?')) return;
+
+        const reportes = reportesActuales.filter((registro) => registro.id !== id);
+        guardarReportes(reportes);
+        renderizarReportes();
+      }
+
+      function actualizarReporte(id, campo, valor) {
+        const reportes = obtenerReportes();
+        const actualizados = reportes.map((reporte) => {
+          if (reporte.id === id) {
+            return { ...reporte, [campo]: valor };
+          }
+          return reporte;
+        });
+        guardarReportes(actualizados);
+        renderizarReportes();
+      }
+
+      function cargarImagenComoDataURL(file, callback) {
+        if (!file) return callback('');
+        const lector = new FileReader();
+        lector.onload = function (e) {
+          callback(e.target.result);
+        };
+        lector.readAsDataURL(file);
+      }
+
+      function renderizarReportes() {
+        const reportes = obtenerReportes();
+        adminList.innerHTML = '';
+
+        if (!reportes.length) {
+          adminList.innerHTML = '<div class="empty-state">No hay quejas registradas.</div>';
+          return;
+        }
+
+        reportes.forEach((reporte) => {
+          const card = document.createElement('article');
+          card.className = 'report-card admin-card';
+          const puedeEliminar = reporte.estado === 'Resuelto' && Boolean(reporte.fotoSeguimiento);
+
+          card.innerHTML = `
+            <div class="report-header">
+              <h2>${reporte.lugar} - ${reporte.aula}</h2>
+              <button class="btn-delete" data-id="${reporte.id}" ${puedeEliminar ? '' : 'disabled'}>Eliminar</button>
+            </div>
+            <div class="report-meta">
+              <span>Prioridad: ${reporte.prioridad}</span>
+              <span>Fecha: ${reporte.fecha}</span>
+              <span>Correo del reportante: ${reporte.correo || reporte.nombre || 'No disponible'}</span>
+            </div>
+            <p>${reporte.descripcion}</p>
+
+            <div class="admin-grid">
+              <label class="status-control">
+                <span>Prioridad</span>
+                <select data-field="prioridad" data-id="${reporte.id}">
+                  <option value="Baja" ${reporte.prioridad === 'Baja' ? 'selected' : ''}>Baja</option>
+                  <option value="Media" ${reporte.prioridad === 'Media' ? 'selected' : ''}>Media</option>
+                  <option value="Alta" ${reporte.prioridad === 'Alta' ? 'selected' : ''}>Alta</option>
+                </select>
+              </label>
+
+              <label class="status-control">
+                <span>Estado</span>
+                <select data-field="estado" data-id="${reporte.id}">
+                  <option value="Pendiente" ${reporte.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                  <option value="En proceso" ${reporte.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
+                  <option value="Resuelto" ${reporte.estado === 'Resuelto' ? 'selected' : ''}>Resuelto</option>
+                </select>
+              </label>
+
+              <label class="status-control">
+                <span>¿Se está haciendo algo?</span>
+                <select data-field="trabajando" data-id="${reporte.id}">
+                  <option value="Sí" ${reporte.trabajando === 'Sí' ? 'selected' : ''}>Sí</option>
+                  <option value="No" ${reporte.trabajando === 'No' ? 'selected' : ''}>No</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="admin-upload">
+              <label>
+                <span>Foto de seguimiento</span>
+                <input type="file" accept="image/*" data-field="fotoSeguimiento" data-id="${reporte.id}" />
+              </label>
+              ${reporte.fotoSeguimiento ? `<img src="${reporte.fotoSeguimiento}" alt="Seguimiento" class="mini-preview" />` : ''}
+            </div>
+            <p class="settings-note">Para eliminar, marca el reporte como resuelto y sube evidencia de seguimiento.</p>
+
+            ${reporte.foto ? `<div class="report-photo-box"><img src="${reporte.foto}" alt="Foto de la problemática" /></div>` : ''}
+          `;
+
+          const deleteBtn = card.querySelector('.btn-delete');
+          deleteBtn.addEventListener('click', () => eliminarReporte(reporte.id));
+
+          card.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', (event) => {
+              const target = event.target;
+              actualizarReporte(Number(target.dataset.id), target.dataset.field, target.value);
+            });
+          });
+
+          const inputFoto = card.querySelector('input[type="file"]');
+          if (inputFoto) {
+            inputFoto.addEventListener('change', (event) => {
+              const file = event.target.files[0];
+              cargarImagenComoDataURL(file, (dataUrl) => {
+                actualizarReporte(Number(event.target.dataset.id), 'fotoSeguimiento', dataUrl);
+              });
+            });
+          }
+
+          adminList.appendChild(card);
+        });
+      }
+
+      function renderizarUsuarios() {
+        const usuarios = CBTISAuth.getUsers();
+        userList.innerHTML = '';
+        if (!usuarios.length) {
+          const item = document.createElement('li');
+          item.className = 'user-empty';
+          item.textContent = 'Todavía no hay usuarios registrados.';
+          userList.appendChild(item);
+          return;
+        }
+
+        usuarios.forEach((usuario) => {
+          const item = document.createElement('li');
+          const nombre = document.createElement('span');
+          const eliminar = document.createElement('button');
+          const email = usuario.email || usuario.username;
+          nombre.textContent = email;
+          eliminar.type = 'button';
+          eliminar.className = 'btn-delete';
+          eliminar.textContent = 'Eliminar';
+          eliminar.addEventListener('click', function () {
+            if (!confirm(`¿Eliminar la cuenta ${email}?`)) return;
+            const restantes = CBTISAuth.getUsers().filter((cuenta) => (cuenta.email || cuenta.username) !== email);
+            localStorage.setItem(CBTISAuth.usersKey, JSON.stringify(restantes));
+            renderizarUsuarios();
+          });
+          item.append(nombre, eliminar);
+          userList.appendChild(item);
+        });
+      }
+
+      userForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const datos = new FormData(userForm);
+        const email = CBTISAuth.normalizeEmail(datos.get('correo'));
+        const password = datos.get('contrasena');
+        const usuarios = CBTISAuth.getUsers();
+        if (!CBTISAuth.isInstitutionalEmail(email)) {
+          userMessage.textContent = 'Ingresa un correo con formato a.número@cbtis128.edu.mx.';
+          return;
+        }
+        if (usuarios.some((usuario) => CBTISAuth.normalizeEmail(usuario.email || usuario.username) === email)) {
+          userMessage.textContent = 'Ese correo ya tiene una cuenta.';
+          return;
+        }
+        usuarios.push({ email, username: email, password });
+        localStorage.setItem(CBTISAuth.usersKey, JSON.stringify(usuarios));
+        userForm.reset();
+        userMessage.textContent = `Cuenta para ${email} creada.`;
+        renderizarUsuarios();
+      });
+
+      logoutBtn.addEventListener('click', function () {
+        sessionStorage.removeItem('cbtis128_admin');
+        window.location.href = 'index.html';
+      });
+
+      if (validarAcceso()) {
+        renderizarUsuarios();
+        renderizarReportes();
+      }
+    </script>
+  </body>
+</html>

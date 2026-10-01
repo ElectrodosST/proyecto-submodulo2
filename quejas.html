@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quejas | CBTIS 128</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page-body">
+    <header class="site-header">
+      <div class="container nav">
+        <div class="brand">CBTIS 128</div>
+        <nav class="menu">
+          <a href="index.html">Inicio</a>
+          <a href="informacion.html">Información</a>
+          <a href="quejas.html">Quejas</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-main">
+      <section class="report-form auth-panel" id="loginPanel">
+        <p class="eyebrow">Acceso para jefes de grupo</p>
+        <h1>Iniciar sesión</h1>
+        <form id="loginForm">
+          <div class="form-grid">
+            <label>
+              <span>Correo institucional</span>
+              <input type="email" name="correo" autocomplete="username" placeholder="a.23308051280594@cbtis128.edu.mx" pattern="a\.[0-9]+@cbtis128\.edu\.mx" required />
+            </label>
+            <label>
+              <span>Contraseña</span>
+              <input type="password" name="contrasena" autocomplete="current-password" required />
+            </label>
+          </div>
+          <p class="form-message" id="loginMessage" role="status"></p>
+          <button type="submit" class="btn btn-primary full-width">Entrar</button>
+        </form>
+        <button type="button" class="btn btn-secondary full-width" id="showRegisterBtn">Crear cuenta</button>
+      </section>
+
+      <section class="report-form auth-panel" id="registerPanel" hidden>
+        <p class="eyebrow">Registro de jefe de grupo</p>
+        <h1>Crear cuenta</h1>
+        <form id="registerForm">
+          <div class="form-grid">
+            <label>
+              <span>Correo institucional</span>
+              <input type="email" name="correo" autocomplete="email" placeholder="a.23308051280594@cbtis128.edu.mx" pattern="a\.[0-9]+@cbtis128\.edu\.mx" required />
+            </label>
+            <label>
+              <span>Contraseña (mínimo 8 caracteres)</span>
+              <input type="password" name="contrasena" minlength="8" autocomplete="new-password" required />
+            </label>
+            <label>
+              <span>Confirmar contraseña</span>
+              <input type="password" name="confirmacion" minlength="8" autocomplete="new-password" required />
+            </label>
+          </div>
+          <p class="form-message" id="registerMessage" role="status"></p>
+          <button type="submit" class="btn btn-primary full-width">Registrarme</button>
+        </form>
+        <button type="button" class="btn btn-secondary full-width" id="showLoginBtn">Ya tengo cuenta</button>
+      </section>
+
+      <div id="quejasContent" hidden>
+        <section class="page-banner">
+          <p class="eyebrow">Reporte de incidencias</p>
+          <h1>¿Dónde se encuentra tu queja?</h1>
+        </section>
+
+        <div class="admin-actions">
+          <span id="jefeActual"></span>
+          <button type="button" class="btn btn-secondary" id="logoutBtn">Cerrar sesión</button>
+        </div>
+
+        <form class="report-form" id="formReporte">
+        <div class="form-grid">
+          <label>
+            <span>Tipo de lugar</span>
+            <select name="lugar" id="lugarReporte" required>
+              <option value="">Selecciona una opción</option>
+              <option>Centro de cómputo</option>
+              <option>Laboratorio</option>
+              <option>Salón</option>
+              <option>Cancha de futbol</option>
+              <option>Cancha de basquetbol</option>
+              <option>Biblioteca</option>
+              <option>Cafetería</option>
+              <option>Instalación en general</option>
+            </select>
+          </label>
+          <label id="aulaField" hidden>
+            <span>¿Cuál aula?</span>
+            <input type="text" name="aula" id="aulaReporte" maxlength="80" placeholder="Escribe el número o nombre del aula" />
+          </label>
+          <label>
+            <span>Prioridad</span>
+            <select name="prioridad" required>
+              <option value="">Selecciona prioridad</option>
+              <option>Baja</option>
+              <option>Media</option>
+              <option>Alta</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <span>Descripción de la situación</span>
+          <textarea
+            name="descripcion"
+            rows="6"
+            placeholder="Describe el problema, el daño o la incidencia que se presenta..."
+            required
+          ></textarea>
+        </label>
+
+        <div class="upload-box">
+          <label class="upload-label">
+            <span>Adjuntar foto de la problemática</span>
+            <input id="fotoReporte" type="file" name="foto" accept="image/*" />
+          </label>
+          <small>Ejemplo: foto de un daño en la pared, equipo, laboratorio o cancha.</small>
+          <div class="preview-box">
+            <img id="previewFoto" alt="Vista previa de la imagen seleccionada" />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary full-width">Enviar reporte</button>
+        </form>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <p>CBTIS 128 • Cuidado de instalaciones</p>
+      </div>
+    </footer>
+
+    <script src="auth.js"></script>
+    <script>
+      const inputFoto = document.getElementById('fotoReporte');
+      const previewFoto = document.getElementById('previewFoto');
+      const formReporte = document.getElementById('formReporte');
+      const loginPanel = document.getElementById('loginPanel');
+      const loginForm = document.getElementById('loginForm');
+      const loginMessage = document.getElementById('loginMessage');
+      const registerPanel = document.getElementById('registerPanel');
+      const registerForm = document.getElementById('registerForm');
+      const registerMessage = document.getElementById('registerMessage');
+      const quejasContent = document.getElementById('quejasContent');
+      const lugarReporte = document.getElementById('lugarReporte');
+      const aulaField = document.getElementById('aulaField');
+      const aulaReporte = document.getElementById('aulaReporte');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      function mostrarFormulario(user) {
+        loginPanel.hidden = true;
+        quejasContent.hidden = false;
+        document.getElementById('jefeActual').textContent = `Sesión: ${user.email || user.username}`;
+      }
+
+      const usuarioActivo = CBTISAuth.currentUser();
+      if (usuarioActivo) mostrarFormulario(usuarioActivo);
+
+      loginForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const datos = new FormData(loginForm);
+        const user = CBTISAuth.login(datos.get('correo'), datos.get('contrasena'));
+        if (user) {
+          mostrarFormulario(user);
+        } else {
+          loginMessage.textContent = 'Correo institucional o contraseña incorrectos.';
+        }
+      });
+
+      document.getElementById('showRegisterBtn').addEventListener('click', function () {
+        loginPanel.hidden = true;
+        registerPanel.hidden = false;
+      });
+
+      document.getElementById('showLoginBtn').addEventListener('click', function () {
+        registerPanel.hidden = true;
+        loginPanel.hidden = false;
+      });
+
+      registerForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const datos = new FormData(registerForm);
+        const correo = datos.get('correo');
+        const contrasena = datos.get('contrasena');
+        if (contrasena !== datos.get('confirmacion')) {
+          registerMessage.textContent = 'Las contraseñas no coinciden.';
+          return;
+        }
+
+        const resultado = CBTISAuth.register(correo, contrasena);
+        if (resultado.error) {
+          registerMessage.textContent = resultado.error;
+          return;
+        }
+        mostrarFormulario(resultado.user);
+      });
+
+      logoutBtn.addEventListener('click', function () {
+        CBTISAuth.logout();
+        window.location.reload();
+      });
+
+      lugarReporte.addEventListener('change', function () {
+        const requiereAula = lugarReporte.value === 'Salón';
+        aulaField.hidden = !requiereAula;
+        aulaReporte.required = requiereAula;
+        if (!requiereAula) aulaReporte.value = '';
+      });
+
+      inputFoto.addEventListener('change', function () {
+        const archivo = this.files[0];
+
+        if (archivo) {
+          const lector = new FileReader();
+
+          lector.onload = function (event) {
+            previewFoto.src = event.target.result;
+            previewFoto.style.display = 'block';
+          };
+
+          lector.readAsDataURL(archivo);
+        }
+      });
+
+      formReporte.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(formReporte);
+        const lugar = formData.get('lugar');
+        const aula = formData.get('aula') || '';
+        const descripcion = formData.get('descripcion');
+        const prioridad = formData.get('prioridad');
+        const usuario = CBTISAuth.currentUser();
+        const correo = usuario.email || usuario.username;
+        const archivo = inputFoto.files[0];
+
+        const nuevoReporte = {
+          id: Date.now(),
+          lugar,
+          aula,
+          descripcion,
+          prioridad,
+          nombre: correo,
+          correo,
+          fecha: new Date().toLocaleDateString('es-MX'),
+          foto: '',
+          estado: 'Pendiente'
+        };
+
+        if (archivo) {
+          const lector = new FileReader();
+
+          lector.onload = function (event) {
+            nuevoReporte.foto = event.target.result;
+            guardarReporte(nuevoReporte);
+            alert('Tu reporte ha sido registrado correctamente.');
+            formReporte.reset();
+            previewFoto.style.display = 'none';
+            previewFoto.src = '';
+            window.location.href = 'reportes.html';
+          };
+
+          lector.readAsDataURL(archivo);
+        } else {
+          guardarReporte(nuevoReporte);
+          alert('Tu reporte ha sido registrado correctamente.');
+          formReporte.reset();
+          previewFoto.style.display = 'none';
+          previewFoto.src = '';
+          window.location.href = 'reportes.html';
+        }
+      });
+
+      function guardarReporte(reporte) {
+        const clave = 'cbtis128_reportes';
+        const anteriores = JSON.parse(localStorage.getItem(clave) || '[]');
+        const lista = [reporte, ...anteriores];
+        localStorage.setItem(clave, JSON.stringify(lista));
+      }
+    </script>
+  </body>
+</html>

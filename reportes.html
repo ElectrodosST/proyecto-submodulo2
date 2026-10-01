@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reportes | CBTIS 128</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page-body">
+    <header class="site-header">
+      <div class="container nav">
+        <div class="brand">CBTIS 128</div>
+        <nav class="menu">
+          <a href="index.html">Inicio</a>
+          <a href="informacion.html">Información</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-main">
+      <section class="page-banner">
+        <p class="eyebrow">Historial de incidencias</p>
+        <h1>Reportes del plantel</h1>
+        <p>Consulta las quejas registradas, su estado de atención y las evidencias publicadas.</p>
+      </section>
+      <section class="report-list" id="listaReportes"></section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <p>CBTIS 128 • Cuidado de instalaciones</p>
+      </div>
+    </footer>
+
+    <button class="admin-trigger" id="adminTrigger" aria-label="Acceso a mantenimiento"> </button>
+
+    <script>
+      const listaReportes = document.getElementById('listaReportes');
+      const clave = 'cbtis128_reportes';
+      const adminTrigger = document.getElementById('adminTrigger');
+
+      adminTrigger.addEventListener('click', function () {
+        const password = prompt('Ingrese la contraseña de mantenimiento');
+        if (password === 'mantenimiento128') {
+          window.location.href = 'mantenimiento.html';
+        } else if (password !== null) {
+          alert('Contraseña incorrecta');
+        }
+      });
+
+      function obtenerReportes() {
+        try {
+          const registros = JSON.parse(localStorage.getItem(clave) || '[]');
+          return Array.isArray(registros) ? registros : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function guardarReportes(reportes) {
+        localStorage.setItem(clave, JSON.stringify(reportes));
+      }
+
+      function obtenerClaseEstado(estado) {
+        if (estado === 'Resuelto') return 'badge-success';
+        if (estado === 'En proceso') return 'badge-warning';
+        return 'badge-info';
+      }
+
+      function obtenerTextoTrabajo(trabajando) {
+        return trabajando === 'Sí' ? 'Sí' : 'No';
+      }
+
+      function renderizarReportes() {
+        const reportes = obtenerReportes();
+        listaReportes.innerHTML = '';
+
+        if (!reportes.length) {
+          listaReportes.innerHTML = '<div class="empty-state">No hay quejas registradas por el momento.</div>';
+          return;
+        }
+
+        reportes.forEach((reporte) => {
+          const tarjeta = document.createElement('article');
+          tarjeta.className = 'report-card';
+
+          tarjeta.innerHTML = `
+            <div class="report-header">
+              <h2>${reporte.lugar}${reporte.aula ? ` - ${reporte.aula}` : ''}</h2>
+              <span class="badge ${obtenerClaseEstado(reporte.estado)}">${reporte.estado || 'Pendiente'}</span>
+            </div>
+            <div class="report-meta">
+              <span>Prioridad: ${reporte.prioridad}</span>
+              <span>Fecha: ${reporte.fecha}</span>
+            </div>
+            <p>${reporte.descripcion}</p>
+            <div class="report-state-line">
+              <strong>Se está haciendo algo:</strong>
+              <span class="work-state ${reporte.trabajando === 'Sí' ? 'work-yes' : 'work-no'}">${obtenerTextoTrabajo(reporte.trabajando)}</span>
+            </div>
+            ${reporte.foto ? `<div class="report-photo-box"><img src="${reporte.foto}" alt="Foto de la problemática" /></div>` : ''}
+            ${reporte.fotoSeguimiento ? `<div class="report-photo-box secondary"><img src="${reporte.fotoSeguimiento}" alt="Foto de seguimiento" /></div>` : ''}
+          `;
+
+          listaReportes.appendChild(tarjeta);
+        });
+      }
+
+      renderizarReportes();
+      window.addEventListener('storage', function (event) {
+        if (event.key === clave) renderizarReportes();
+      });
+
+    </script>
+  </body>
+</html>
