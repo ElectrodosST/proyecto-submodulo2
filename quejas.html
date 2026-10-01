@@ -80,30 +80,20 @@
         <div class="form-grid">
           <label>
             <span>Tipo de lugar</span>
-            <select name="lugar" id="lugarReporte" required>
-              <option value="">Selecciona una opción</option>
-              <option>Centro de cómputo</option>
-              <option>Laboratorio</option>
-              <option>Salón</option>
-              <option>Cancha de futbol</option>
-              <option>Cancha de basquetbol</option>
-              <option>Biblioteca</option>
-              <option>Cafetería</option>
-              <option>Instalación en general</option>
-            </select>
+             <select name="lugar" required>
+                <option value="">Selecciona una opción</option>
+                <option>Laboratorios</option>
+                <option>Aulas</option>
+                <option>Canchas</option>
+                <option>Espacios Compartidos</option>
+                <option>Plaza Civica</option>
+                <option>Departamentos y/o oficinas</option>
+                <option>Instalaciones Generales</option>
+              </select>
           </label>
           <label id="aulaField" hidden>
             <span>¿Cuál aula?</span>
             <input type="text" name="aula" id="aulaReporte" maxlength="80" placeholder="Escribe el número o nombre del aula" />
-          </label>
-          <label>
-            <span>Prioridad</span>
-            <select name="prioridad" required>
-              <option value="">Selecciona prioridad</option>
-              <option>Baja</option>
-              <option>Media</option>
-              <option>Alta</option>
-            </select>
           </label>
         </div>
 
